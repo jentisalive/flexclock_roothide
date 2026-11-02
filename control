@@ -1,8 +1,8 @@
 Package: com.tr3tol.flexclock
 Name: FlexClock
-Version: 1.0.2
-Architecture: iphoneos-arm64
-Description: Image based lock screen clock with installable digit packs
+Version: 1.0.2+roothide1
+Architecture: iphoneos-arm64e
+Description: Image based lock screen clock with installable digit packs (RootHide)
 Maintainer: tr3tol <https://github.com/tr3tol>
 Author: tr3tol <https://github.com/tr3tol>
 Section: Tweaks

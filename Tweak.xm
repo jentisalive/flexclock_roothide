@@ -25,14 +25,13 @@
 #import <QuartzCore/QuartzCore.h>
 #import <objc/runtime.h>
 #import "PrivateHeaders.h"
+#include "FlexClockPaths.h"
 
 // The only safe way to obtain an NSString in this build.
 #define S(cstr) ([NSString stringWithUTF8String:(cstr)])
 
 // Packs ship inside the package, imported ones live in a writable directory and
 // shadow a bundled pack of the same name.
-#define kBuiltinPacks "/var/jb/Library/Application Support/FlexClock/Packs"
-#define kUserPacks    "/var/mobile/Library/FlexClock/Packs"
 #define kDefaultPack  "Anime.flexpack"
 #define kDomain       "com.tr3tol.flexclock"
 
