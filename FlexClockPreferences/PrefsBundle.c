@@ -13,10 +13,8 @@
 #include <objc/runtime.h>
 #include <objc/message.h>
 #include <string.h>
+#include "../FlexClockPaths.h"
 
-#define kBundlePath     "/var/jb/Library/PreferenceBundles/FlexClockPreferences.bundle"
-#define kBuiltinPacks   "/var/jb/Library/Application Support/FlexClock/Packs"
-#define kUserPacks      "/var/mobile/Library/FlexClock/Packs"
 #define kDomain         "com.tr3tol.flexclock"
 #define kPackExtension  ".flexpack"
 

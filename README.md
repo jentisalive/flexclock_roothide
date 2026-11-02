@@ -1,8 +1,10 @@
-# FlexClock
+# FlexClock for RootHide
 
 Replaces the iOS lock screen clock with images, and lets you install your own digit packs.
 
-Built against the `CoverSheetKit` lock screen, for iOS 18.
+Native RootHide source port: no RootHide Patcher conversion is needed.
+Built against the `CoverSheetKit` lock screen, for iOS 18. This port does not
+add support for iOS 15–17; the original firmware restriction is preserved.
 
 ![FlexClock on the lock screen](screenshot.png)
 
@@ -21,24 +23,21 @@ Built against the `CoverSheetKit` lock screen, for iOS 18.
 
 ## Requirements
 
-- iOS 18, rootless jailbreak (developed on 18.5, Dopamine 3.0.4)
+- iOS 18 with a compatible RootHide jailbreak/injection environment
+- RootHide versions of the dependencies below
 - `preferenceloader`
 - ElleKit / Substrate
 
 ## Installation
 
-Add the repository in Sileo:
+Build this fork as described below, or download the `flexclock-roothide` artifact
+from a successful **Build RootHide package** run in this repository's Actions tab.
+Unzip the artifact and open the `iphoneos-arm64e.deb` in Sileo inside RootHide.
+The upstream repository serves the original rootless package, not this port.
 
-```
-https://tr3tol.github.io/repo/
-```
-
-Or install a release `.deb` by hand:
-
-```sh
-dpkg -i com.tr3tol.flexclock_1.0.1_iphoneos-arm64.deb
-killall -9 SpringBoard
-```
+Remove the original package or a Patcher-converted copy before installing this
+build. The package identifier is unchanged, so they cannot coexist. Respring
+after installation. Do not run this package through RootHide Patcher.
 
 Settings live under **Settings → FlexClock**.
 
@@ -50,15 +49,21 @@ and Anime is the default.
 Packs are plain folders. The bundled ones live here:
 
 ```
-/var/jb/Library/Application Support/FlexClock/Packs/
+<jbroot>/Library/Application Support/FlexClock/Packs/
 ```
 
 Imported ones live outside it, so they survive updates and can be managed from
 Settings:
 
 ```
-/var/mobile/Library/FlexClock/Packs/
+<jbroot>/var/mobile/Library/FlexClock/Packs/
 ```
+
+`<jbroot>` is RootHide's randomized jailbreak root. Both the tweak and Settings
+resolve it at runtime with `jbroot()`; do not hardcode its current location.
+The installer creates the imported-pack directory inside that root and assigns
+it to `mobile`. Existing packs from a regular rootless installation are not
+moved automatically; import them again from Settings.
 
 A user pack shadows a bundled pack of the same name, so the included artwork can
 be replaced without touching the installed package.
@@ -104,11 +109,36 @@ directory.
 
 ## Building
 
-Requires [Theos](https://theos.dev) with a rootless setup:
+Requires [RootHide Theos](https://github.com/roothide/theos), its headers and
+libraries, and the patched iPhoneOS 16.5 SDK. On macOS, install Xcode and `ldid`.
+A current Xcode toolchain is recommended for the arm64e ABI.
 
 ```sh
-make package THEOS_PACKAGE_SCHEME=rootless
+git clone --recursive https://github.com/roothide/theos.git "$HOME/theos-roothide"
+export THEOS="$HOME/theos-roothide"
+"$THEOS/bin/install-sdk" iPhoneOS16.5
+make clean
+make package FINALPACKAGE=1
 ```
+
+The default scheme is `roothide`. The output is
+`packages/com.tr3tol.flexclock_1.0.2+roothide1_iphoneos-arm64e.deb`.
+Both the tweak and preference bundle explicitly link `libroothide`, including
+when clang modules are disabled. The package payload uses `/Library` paths;
+RootHide's package manager installs these under its own root.
+
+A regular rootless build is still available with
+`make clean && make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless`.
+It uses `/var/jb` for package resources and the original system mobile directory
+for imported packs. Theos sets the package architecture for that scheme.
+
+## Validation
+
+The GitHub Actions workflow builds and checks the RootHide package metadata and
+layout, then uploads the `.deb`. A successful build does not replace on-device
+validation: check injection into SpringBoard, Settings → FlexClock, all bundled
+packs, importing/deleting a pack, and live preference updates. After a jailbreak
+root change, check that bundled and imported packs still resolve correctly.
 
 ## Credits
 

@@ -1,0 +1,52 @@
+name: Build RootHide package
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-14
+    env:
+      THEOS: ${{ github.workspace }}/.theos-sdk
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: brew install ldid xz dpkg
+      - name: Install RootHide Theos and patched SDK
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          git clone --recursive https://github.com/roothide/theos.git "$THEOS"
+          git -C "$THEOS" checkout 3ac89c984ec652fd16bcd91b33ae16de45ce76fa
+          git -C "$THEOS" submodule update --init --recursive
+          "$THEOS/bin/install-sdk" iPhoneOS16.5
+      - name: Build native RootHide package
+        run: make package FINALPACKAGE=1
+      - name: Check package and linked libraries
+        run: |
+          deb=$(find packages -name '*_iphoneos-arm64e.deb' -print -quit)
+          test -n "$deb"
+          test "$(dpkg-deb -f "$deb" Architecture)" = iphoneos-arm64e
+          dpkg-deb -x "$deb" "$RUNNER_TEMP/flexclock"
+          root="$RUNNER_TEMP/flexclock"
+          test ! -e "$root/var/jb"
+          test -f "$root/Library/MobileSubstrate/DynamicLibraries/FlexClock.dylib"
+          test -f "$root/Library/PreferenceBundles/FlexClockPreferences.bundle/FlexClockPreferences"
+          test -f "$root/Library/PreferenceLoader/Preferences/FlexClock.plist"
+          test -d "$root/Library/Application Support/FlexClock/Packs/Anime.flexpack"
+          for binary in "$root/Library/MobileSubstrate/DynamicLibraries/FlexClock.dylib" "$root/Library/PreferenceBundles/FlexClockPreferences.bundle/FlexClockPreferences"; do
+            xcrun lipo "$binary" -verify_arch arm64 arm64e
+            xcrun otool -L "$binary" | tee "$RUNNER_TEMP/linked-libraries.txt"
+            grep -F '@loader_path/.jbroot/usr/lib/libroothide.dylib' "$RUNNER_TEMP/linked-libraries.txt"
+            if grep -F '/var/jb/' "$RUNNER_TEMP/linked-libraries.txt"; then exit 1; fi
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flexclock-roothide
+          path: packages/*_iphoneos-arm64e.deb
+          if-no-files-found: error
