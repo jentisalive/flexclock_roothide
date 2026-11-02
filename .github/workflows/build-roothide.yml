@@ -38,7 +38,7 @@ jobs:
           test -f "$root/Library/PreferenceLoader/Preferences/FlexClock.plist"
           test -d "$root/Library/Application Support/FlexClock/Packs/Anime.flexpack"
           for binary in "$root/Library/MobileSubstrate/DynamicLibraries/FlexClock.dylib" "$root/Library/PreferenceBundles/FlexClockPreferences.bundle/FlexClockPreferences"; do
-            xcrun lipo -verify_arch arm64 arm64e "$binary"
+            xcrun lipo "$binary" -verify_arch arm64 arm64e
             xcrun otool -L "$binary" | tee "$RUNNER_TEMP/linked-libraries.txt"
             grep -F '@loader_path/.jbroot/usr/lib/libroothide.dylib' "$RUNNER_TEMP/linked-libraries.txt"
             if grep -F '/var/jb/' "$RUNNER_TEMP/linked-libraries.txt"; then exit 1; fi
