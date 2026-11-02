@@ -18,6 +18,8 @@ jobs:
       - name: Install build dependencies
         run: brew install ldid xz dpkg
       - name: Install RootHide Theos and patched SDK
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           git clone --recursive https://github.com/roothide/theos.git "$THEOS"
           git -C "$THEOS" checkout 3ac89c984ec652fd16bcd91b33ae16de45ce76fa
